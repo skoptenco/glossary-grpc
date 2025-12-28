@@ -5,6 +5,7 @@ import glossary_pb2
 import glossary_pb2_grpc
 from storage import Storage
 from models import TermCreate, TermUpdate
+from grpc_reflection.v1alpha import reflection
 from datetime import datetime
 
 class GlossaryServicer(glossary_pb2_grpc.GlossaryServicer):
@@ -87,6 +88,14 @@ def serve(host='[::]', port=50051):
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     storage = Storage()
     glossary_pb2_grpc.add_GlossaryServicer_to_server(GlossaryServicer(storage), server)
+
+    SERVICE_NAMES = (
+        glossary_pb2.DESCRIPTOR.services_by_name['Glossary'].full_name,
+        reflection.SERVICE_NAME,
+    )
+
+    reflection.enable_server_reflection(SERVICE_NAMES, server)
+
     server.add_insecure_port(f'{host}:{port}')
     server.start()
     print(f"gRPC server started on {host}:{port}")
